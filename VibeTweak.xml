@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-16"?>
+<UserConfig>
+    <Group id="horsevibe" displayName="Mods.horsevibe">
+        <PresetsArray>
+            <Preset id="0" displayName="horsevibe_Preset_Default">
+                <Entry varId="walkS" value="0.49"/>
+                <Entry varId="walkL" value="0.49"/>
+                <Entry varId="trotS" value="0.31"/>
+                <Entry varId="trotL" value="0.41"/>
+                <Entry varId="canterS" value="0.12"/>
+                <Entry varId="canterL" value="0.44"/>
+                <Entry varId="gallopS" value="0.10"/>
+                <Entry varId="gallopL" value="0.56"/>
+            </Preset>
+        </PresetsArray>
+        <VisibleVars>
+            <Var id="walkS" displayName="walkS" displayType="SLIDER;0;1;200"/>
+            <Var id="walkL" displayName="walkL" displayType="SLIDER;0;1;200"/>
+            <Var id="trotS" displayName="trotS" displayType="SLIDER;0;1;200"/>
+            <Var id="trotL" displayName="trotL" displayType="SLIDER;0;1;200"/>
+            <Var id="canterS" displayName="canterS" displayType="SLIDER;0;1;200"/>
+            <Var id="canterL" displayName="canterL" displayType="SLIDER;0;1;200"/>
+            <Var id="gallopS" displayName="gallopS" displayType="SLIDER;0;1;200"/>
+            <Var id="gallopL" displayName="gallopL" displayType="SLIDER;0;1;200"/>
+        </VisibleVars>
+    </Group>
+</UserConfig>
