@@ -44,7 +44,7 @@ class CHorseVibrationManager extends CObject {
         var speed: float;
         var gaitIndex: int = 0;
         var settings: PulseSettings;
-        var horseActor: CActor = (CActor)horse.GetEntity();
+        var horseActor: CActor;
 
         if ( theGame.IsDialogOrCutscenePlaying() || theGame.IsBlackscreenOrFading() ) {      
             Vibrate(0, 0.1f);
@@ -69,7 +69,7 @@ class CHorseVibrationManager extends CObject {
             wasInAction = false; 
         }
 
-
+        horseActor = (CActor)horse.GetEntity();
         if ( horseActor.IsInAir() ) {                                     // Jumping
             return; 
         }
