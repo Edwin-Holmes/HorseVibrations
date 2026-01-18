@@ -7,12 +7,12 @@ struct PulseSettings {                                                          
 
 class CHorseVibrationManager extends CObject {
     private var gaitSettings    : array<PulseSettings>;
-    public var horsePulseTimer  : float;
+    private var horsePulseTimer : float;
     private var doubleVibe      : bool;
     private var active          : bool;
     private var lastGaitIndex   : int;
     private var wasInAction     : bool;
-    private var isUpshifting    : bool;
+    private var speedingUp      : bool;
 
     public function Init() {                                                            // Populate array / (re)set flags
         gaitSettings.Clear();
@@ -57,7 +57,7 @@ class CHorseVibrationManager extends CObject {
             return;
         }
 
-        if ( horse.IsInHorseAction() ) {                                    // Rearing
+        if ( horse.IsInHorseAction() ) {                            // Rearing
             if (!wasInAction) {
                 theGame.VibrateController(0.4f, 0.8f, 0.7f); 
                 wasInAction = true; 
@@ -68,13 +68,7 @@ class CHorseVibrationManager extends CObject {
             wasInAction = false; 
         }
 
-        horseActor = (CActor)horse.GetEntity();
-        if ( horseActor.IsInAir() ) {                                       // Jumping
-            return; 
-        }
-
-
-        if (isIdle) {                                                                   // Stopped?  How Hard?  Vibrate?
+        if (isIdle) {                                               // Stopped?  How Hard?  Vibrate?
             if (lastGaitIndex >= 0) {
                 if (lastGaitIndex >= 2) {
                     theGame.VibrateController(0.4f, 0.8f, 0.7f);
@@ -86,16 +80,21 @@ class CHorseVibrationManager extends CObject {
             return;
         } 
         
-        horsePulseTimer -= dt;                                                          // Reduce counter
+        horseActor = (CActor)horse.GetEntity();
+        if ( horseActor.IsInAir() ) {                               // Jumping
+            return; 
+        }
 
-        if (isUpshifting && horsePulseTimer <= 0.0f) {                                  // Second tap for spur horse
+        horsePulseTimer -= dt;                                      // Reduce counter
+
+        if (speedingUp && horsePulseTimer <= 0.0f) {                // Second tap for spur horse
             theGame.VibrateController(1.0f, 0.2f, 0.3f);
-            isUpshifting = false;
+            speedingUp = false;
             horsePulseTimer = 0.15f; 
             return;
         }
 
-        if (horse.inCanter) {                                                           // CDPR doesn't know gallop is faster than canter - fix it here
+        if (horse.inCanter) {                                       // CDPR doesn't know gallop is faster than canter - fix it here
             gaitIndex = 3;
         } else if (horse.inGallop) {
             gaitIndex = 2;
@@ -113,22 +112,22 @@ class CHorseVibrationManager extends CObject {
             }
         }
 
-        if (gaitIndex != lastGaitIndex) {                                               // Speeding up / slowing down
+        if (gaitIndex != lastGaitIndex) {                           // Speeding up / slowing down
             if (gaitIndex > lastGaitIndex) {
                 theGame.VibrateController(0.2f, 1.0f, 0.1f);
                 horsePulseTimer = 0.35f;
-                isUpshifting = true;
+                speedingUp = true;
             } else if (gaitIndex < lastGaitIndex) {
-                Vibrate(3, 0.4f);
+                Vibrate(3, 0.2f);
                 horsePulseTimer = 0.1f;
             }
             lastGaitIndex = gaitIndex;
-            if (isUpshifting) {
+            if (speedingUp) {
                 return;
             }
         }    
 
-        settings = gaitSettings[gaitIndex];                                             // Use gait-specific vibrations for hoofbeats
+        settings = gaitSettings[gaitIndex];                         // Use gait-specific vibrations for hoofbeats
 
         if (horsePulseTimer <= 0.0f) {
             if (doubleVibe) {
@@ -141,7 +140,7 @@ class CHorseVibrationManager extends CObject {
                 doubleVibe = true;
             }
 
-            if (horsePulseTimer < -1.0f) {                                             // Cap timer at -1s lag
+            if (horsePulseTimer < -1.0f) {                          // Cap timer at -1s lag
                 horsePulseTimer = 0.0f;
             }
         }
@@ -194,7 +193,7 @@ public var vibeManager : CHorseVibrationManager;
     return wrappedMethod(entity);
 }
 
-@wrapMethod(CR4Player) function OnSpawned( spawnData : SEntitySpawnData ) {                   // In case we spawn on horse
+@wrapMethod(CR4Player) function OnSpawned( spawnData : SEntitySpawnData ) {             // In case we spawn on horse
     var retVal: bool; 
     var horse: W3HorseComponent;
 
