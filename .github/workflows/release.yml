@@ -1,0 +1,68 @@
+name: Generate Mod Release
+
+on:
+  push:
+    tags:
+      - 'v.*' 
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Package mod
+        shell: pwsh
+        run: |
+          $workspaceRoot = "${{ github.workspace }}"
+          $workspaceName = Split-Path -Leaf $workspaceRoot
+          $modName       = "mod$workspaceName"
+
+          $buildRoot = "$workspaceRoot\build"
+          $zipPath   = "$workspaceRoot\$workspaceName.zip"
+
+          $binPath     = "$buildRoot\bin\config\r4game\user_config_matrix\pc"
+          $modPath     = "$buildRoot\mods\$modName"
+          $contentPath = "$modPath\content"
+
+          # Clean staging
+          if (Test-Path $buildRoot) { Remove-Item $buildRoot -Recurse -Force }
+          New-Item -Force -ItemType Directory -Path $contentPath | Out-Null
+
+          function NotIgnored($item) {
+            return ($item.FullName -notmatch '\\Ignored\\')
+          }
+
+          # Copy scripts
+          Get-ChildItem "$workspaceRoot\scripts" -Recurse | Where-Object { NotIgnored $_ } | ForEach-Object {
+            $dest = $_.FullName.Replace($workspaceRoot, $contentPath)
+            New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
+            Copy-Item $_.FullName $dest -Force
+          }
+
+          # Copy w3strings
+          Get-ChildItem $workspaceRoot -Recurse -Filter *.w3strings | Where-Object { NotIgnored $_ } | ForEach-Object {
+            Copy-Item $_.FullName $contentPath
+          }
+
+          # Copy settings.txt
+          Get-ChildItem $workspaceRoot -Recurse -Filter *.settings.txt | Where-Object { NotIgnored $_ } | ForEach-Object {
+            Copy-Item $_.FullName $modPath
+          }
+
+          # Copy XMLs only if they exist
+          $xmlFiles = Get-ChildItem $workspaceRoot -Recurse -Filter *.xml | Where-Object { NotIgnored $_ }
+          if ($xmlFiles.Count -gt 0) {
+            New-Item -Force -ItemType Directory -Path $binPath | Out-Null
+            $xmlFiles | ForEach-Object { Copy-Item $_.FullName $binPath }
+          }
+
+          # Zip staged contents
+          Compress-Archive -Path "$buildRoot\*" -DestinationPath $zipPath -Force
+          Write-Host "Packaged $zipPath successfully!"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ github.workspace }}\${{ github.event.repository.name }}.zip
