@@ -11,14 +11,13 @@ class CHorseVibrationManager extends CObject {
     private var doubleVibe      : bool;
     private var active          : bool;
     private var lastGaitIndex   : int;
-    public var isAirborne       : bool;
     private var wasInAction     : bool;
     private var isUpshifting    : bool;
 
     public function Init() {                                                            // Populate array / (re)set flags
         gaitSettings.Clear();
         AddPulse(0.49f, 0.49f, 3, 3);   // 0 Walk
-        AddPulse(0.31f, 0.41f, 3, 2);   // 1 Trot 
+        AddPulse(0.30f, 0.40f, 3, 2);   // 1 Trot 
         AddPulse(0.12f, 0.44f, 1, 0);   // 2 Canter
         AddPulse(0.10f, 0.56f, 2, 1);   // 3 Gallop
 
@@ -45,6 +44,7 @@ class CHorseVibrationManager extends CObject {
         var speed: float;
         var gaitIndex: int = 0;
         var settings: PulseSettings;
+        var horseActor: CActor = (CActor)horse.GetEntity();
 
         if ( theGame.IsDialogOrCutscenePlaying() || theGame.IsBlackscreenOrFading() ) {      
             Vibrate(0, 0.1f);
@@ -70,7 +70,7 @@ class CHorseVibrationManager extends CObject {
         }
 
 
-        if ( isAirborne ) {                                     // Jumping
+        if ( horseActor.IsInAir() ) {                                     // Jumping
             return; 
         }
 
@@ -117,10 +117,10 @@ class CHorseVibrationManager extends CObject {
         if (gaitIndex != lastGaitIndex) {                                               // Speeding up / slowing down
             if (gaitIndex > lastGaitIndex) {
                 theGame.VibrateController(0.2f, 1.0f, 0.1f);
-                horsePulseTimer = 0.12f;
+                horsePulseTimer = 0.7f;
                 isUpshifting = true;
             } else if (gaitIndex < lastGaitIndex) {
-                Vibrate(3, 0.5f);
+                Vibrate(3, 0.4f);
                 horsePulseTimer = 0.1f;
             }
             lastGaitIndex = gaitIndex;
@@ -208,34 +208,6 @@ public var vibeManager : CHorseVibrationManager;
             horse.vibeManager.Init();
         }
         horse. vibeManager.SetActive(true);
-    }
-
-    return retVal;
-}
-
-@wrapMethod(CNewNPC) function OnAnimEvent_TemporaryOffGround( animEventName : name, animEventType : EAnimationEventType, animInfo : SAnimationEventAnimInfo ) {
-    var horseComp : W3HorseComponent;
-    var playerHorse : CNewNPC = thePlayer.GetHorseCurrentlyMounted();
-    var retVal : bool;
-    
-    retVal = wrappedMethod(animEventName, animEventType, animInfo);
-
-    if ( this == playerHorse )
-    {
-        horseComp = (W3HorseComponent)playerHorse.GetComponentByClassName('W3HorseComponent');
-        
-        if ( horseComp && horseComp.vibeManager ) 
-        {
-            if ( animEventType != AET_DurationEnd ) 
-            {
-                horseComp.vibeManager.isAirborne = true;
-            } 
-            else 
-            {
-                horseComp.vibeManager.isAirborne = false;
-                horseComp.vibeManager.horsePulseTimer = 0.0f; 
-            }
-        }
     }
 
     return retVal;
