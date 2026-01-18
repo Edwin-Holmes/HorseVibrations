@@ -17,8 +17,8 @@ class CHorseVibrationManager extends CObject {
     public function Init() {                                                            // Populate array / (re)set flags
         gaitSettings.Clear();
         AddPulse(0.49f, 0.49f, 3, 3);   // 0 Walk
-        AddPulse(0.31f, 0.40f, 3, 2);   // 1 Trot 
-        AddPulse(0.12f, 0.44f, 1, 0);   // 2 Canter
+        AddPulse(0.30f, 0.41f, 3, 2);   // 1 Trot 
+        AddPulse(0.12f, 0.45f, 1, 0);   // 2 Canter
         AddPulse(0.10f, 0.56f, 2, 1);   // 3 Gallop
 
         horsePulseTimer = 0.0f;
@@ -114,7 +114,7 @@ class CHorseVibrationManager extends CObject {
 
         if (gaitIndex != lastGaitIndex) {                           // Speeding up / slowing down
             if (gaitIndex > lastGaitIndex) {
-                theGame.VibrateController(0.2f, 1.0f, 0.1f);
+                theGame.VibrateController(0.2f, 1.0f, 0.03f);
                 horsePulseTimer = 0.35f;
                 speedingUp = true;
             } else if (gaitIndex < lastGaitIndex) {
