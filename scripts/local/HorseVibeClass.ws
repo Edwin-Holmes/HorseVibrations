@@ -19,7 +19,7 @@ class CHorseVibrationManager extends CObject {
         AddPulse(0.49f, 0.49f, 3, 3);   // 0 Walk
         AddPulse(0.30f, 0.41f, 3, 2);   // 1 Trot 
         AddPulse(0.12f, 0.46f, 1, 0);   // 2 Canter
-        AddPulse(0.10f, 0.57f, 2, 1);   // 3 Gallop
+        AddPulse(0.11f, 0.57f, 2, 1);   // 3 Gallop
 
         horsePulseTimer = 0.0f;
         doubleVibe = false;
