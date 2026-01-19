@@ -3,9 +3,9 @@ name: Release Mod
 on:
   push:
     branches:
-      - '**'   # run on any branch push
+      - '**'   
     tags:
-      - 'v*'   # also run on version tags
+      - 'v*'   
 
 jobs:
   build:
