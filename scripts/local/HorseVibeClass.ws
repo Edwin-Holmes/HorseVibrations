@@ -6,10 +6,10 @@ struct PulseSettings {                                                          
 }
 
 class CHorseVibrationManager extends CObject {
+    private var active          : bool;
     private var gaitSettings    : array<PulseSettings>;
     private var horsePulseTimer : float;
     private var doubleVibe      : bool;
-    private var active          : bool;
     private var lastGaitIndex   : int;
     private var wasInAction     : bool;
     private var speedingUp      : bool;
