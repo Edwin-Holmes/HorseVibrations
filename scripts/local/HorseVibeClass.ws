@@ -11,18 +11,15 @@ class CHorseVibrationManager extends CObject {
     private var horsePulseTimer : float;
     private var doubleVibe      : bool;
     private var lastGaitIndex   : int;
-    private var isUpshifting    : bool;
     private var wasInAction     : bool;
-    private var isAirborne      : bool;
-    
-    
+    private var speedingUp      : bool;
 
     public function Init() {                                                            // Populate array / (re)set flags
         gaitSettings.Clear();
         AddPulse(0.49f, 0.49f, 3, 3);   // 0 Walk
-        AddPulse(0.32f, 0.42f, 3, 2);   // 1 Trot 
-        AddPulse(0.13f, 0.45f, 1, 0);   // 2 Canter
-        AddPulse(0.10f, 0.56f, 2, 1);   // 3 Gallop
+        AddPulse(0.30f, 0.41f, 3, 2);   // 1 Trot 
+        AddPulse(0.12f, 0.46f, 1, 0);   // 2 Canter
+        AddPulse(0.11f, 0.57f, 2, 1);   // 3 Gallop
 
         horsePulseTimer = 0.0f;
         doubleVibe = false;
@@ -47,7 +44,7 @@ class CHorseVibrationManager extends CObject {
         var speed: float;
         var gaitIndex: int = 0;
         var settings: PulseSettings;
-        var horseActor : CActor = (CActor)horse.GetEntity();
+        var horseActor: CActor;
 
         if ( theGame.IsDialogOrCutscenePlaying() || theGame.IsBlackscreenOrFading() ) {      
             SetActive(false); 
@@ -60,7 +57,7 @@ class CHorseVibrationManager extends CObject {
             return;
         }
 
-        if ( horse.IsInHorseAction() ) {                        // Rearing
+        if ( horse.IsInHorseAction() ) {                            // Rearing
             if (!wasInAction) {
                 theGame.VibrateController(0.4f, 0.8f, 0.7f); 
                 wasInAction = true; 
@@ -71,16 +68,7 @@ class CHorseVibrationManager extends CObject {
             wasInAction = false; 
         }
 
-        if ( horseActor.IsInAir() ) {                           // Jumping
-            isAirborne = true;
-            return;
-        } else if ( isAirborne ) {
-            isAirborne = false;
-            horsePulseTimer = 0.0f;
-        }
-
-
-        if (isIdle) {                                                                   // Stopped?  How Hard?  Vibrate?
+        if (isIdle) {                                               // Stopped?  How Hard?  Vibrate?
             if (lastGaitIndex >= 0) {
                 if (lastGaitIndex >= 2) {
                     theGame.VibrateController(0.4f, 0.8f, 0.7f);
@@ -92,16 +80,21 @@ class CHorseVibrationManager extends CObject {
             return;
         } 
         
-        horsePulseTimer -= dt;                                                          // Reduce counter
+        horseActor = (CActor)horse.GetEntity();
+        if ( horseActor.IsInAir() ) {                               // Jumping
+            return; 
+        }
 
-        if (isUpshifting && horsePulseTimer <= 0.0f) {                                  // Second tap for spur horse
-            theGame.VibrateController(1.0f, 0.2f, 0.06f);
-            isUpshifting = false;
-            horsePulseTimer = 0.15f; 
+        horsePulseTimer -= dt;                                      // Reduce counter
+
+        if (speedingUp && horsePulseTimer <= 0.0f) {                // Second tap for spur horse
+            theGame.VibrateController(1.0f, 0.2f, 0.03f);
+            speedingUp = false;
+            horsePulseTimer = 0.2f; 
             return;
         }
 
-        if (horse.inCanter) {                                                           // CDPR doesn't know gallop is faster than canter - fix it here
+        if (horse.inCanter) {                                       // CDPR doesn't know gallop is faster than canter - fix it here
             gaitIndex = 3;
         } else if (horse.inGallop) {
             gaitIndex = 2;
@@ -119,22 +112,22 @@ class CHorseVibrationManager extends CObject {
             }
         }
 
-        if (gaitIndex != lastGaitIndex) {                                               // Speeding up / slowing down
+        if (gaitIndex != lastGaitIndex) {                           // Speeding up / slowing down
             if (gaitIndex > lastGaitIndex) {
-                theGame.VibrateController(0.5f, 1.0f, 0.02f);
-                horsePulseTimer = 0.12f;
-                isUpshifting = true;
+                theGame.VibrateController(0.2f, 1.0f, 0.03f);
+                horsePulseTimer = 0.3f;
+                speedingUp = true;
             } else if (gaitIndex < lastGaitIndex) {
-                Vibrate(3, 0.5f);
+                Vibrate(3, 0.2f);
                 horsePulseTimer = 0.1f;
             }
             lastGaitIndex = gaitIndex;
-            if (isUpshifting) {
+            if (speedingUp) {
                 return;
             }
         }    
 
-        settings = gaitSettings[gaitIndex];                                             // Use gait-specific vibrations for hoofbeats
+        settings = gaitSettings[gaitIndex];                         // Use gait-specific vibrations for hoofbeats
 
         if (horsePulseTimer <= 0.0f) {
             if (doubleVibe) {
@@ -147,7 +140,7 @@ class CHorseVibrationManager extends CObject {
                 doubleVibe = true;
             }
 
-            if (horsePulseTimer < -1.0f) {                                             // Cap timer at -1s lag
+            if (horsePulseTimer < -1.0f) {                          // Cap timer at -1s lag
                 horsePulseTimer = 0.0f;
             }
         }
@@ -200,7 +193,7 @@ public var vibeManager : CHorseVibrationManager;
     return wrappedMethod(entity);
 }
 
-@wrapMethod(CR4Player) function OnSpawned( spawnData : SEntitySpawnData ) {                   // In case we spawn on horse
+@wrapMethod(CR4Player) function OnSpawned( spawnData : SEntitySpawnData ) {             // In case we spawn on horse
     var retVal: bool; 
     var horse: W3HorseComponent;
 
@@ -224,28 +217,4 @@ public var vibeManager : CHorseVibrationManager;
         vibeManager.Update(dt, this, isInIdle);
     }
     return wrappedMethod(dt);
-}
-
-exec function VibeTest(intensity: int, duration: float) {
-        switch (intensity) {
-            case 3: 
-                theGame.VibrateControllerVeryHard(duration); 
-                break;
-            case 2: 
-                theGame.VibrateControllerHard(duration); 
-                break;
-            case 1: 
-                theGame.VibrateControllerLight(duration); 
-                break;
-            case 0:
-                theGame.VibrateControllerVeryLight(duration);
-                break;
-            default: 
-                GetWitcherPlayer().DisplayHudMessage("Invalid vibration intensity requested");
-                break;
-        }
-}
-
-exec function VibeTestRaw(low : float, high : float, duration : float) {
-    theGame.VibrateController(low, high, duration);
 }
