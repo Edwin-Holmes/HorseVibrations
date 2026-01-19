@@ -3,9 +3,9 @@ name: Release Mod
 on:
   push:
     branches:
-      - '**'   # run on any branch push
+      - '**'   
     tags:
-      - 'v*'   # also run on version tags
+      - 'v*'   
 
 jobs:
   build:
@@ -32,7 +32,7 @@ jobs:
           New-Item -Force -ItemType Directory -Path $contentPath | Out-Null
 
           function NotIgnored($item) {
-            return ($item.FullName -notmatch '\\Ignored\\')
+            return ($item.FullName -notmatch '\\Ignored\\' -and $item.FullName -notmatch '\\build\\')
           }
 
           # Copy scripts
@@ -44,19 +44,24 @@ jobs:
 
           # Copy w3strings
           Get-ChildItem $workspaceRoot -Recurse -Filter *.w3strings | Where-Object { NotIgnored $_ } | ForEach-Object {
-            Copy-Item $_.FullName $contentPath
+            $dest = Join-Path $contentPath $_.Name
+            if ($_.FullName -ne $dest) { Copy-Item $_.FullName $dest -Force }
           }
 
           # Copy settings.txt
           Get-ChildItem $workspaceRoot -Recurse -Filter *.settings.txt | Where-Object { NotIgnored $_ } | ForEach-Object {
-            Copy-Item $_.FullName $modPath
+            $dest = Join-Path $modPath $_.Name
+            if ($_.FullName -ne $dest) { Copy-Item $_.FullName $dest -Force }
           }
 
           # Copy XMLs only if they exist
           $xmlFiles = Get-ChildItem $workspaceRoot -Recurse -Filter *.xml | Where-Object { NotIgnored $_ }
           if ($xmlFiles.Count -gt 0) {
             New-Item -Force -ItemType Directory -Path $binPath | Out-Null
-            $xmlFiles | ForEach-Object { Copy-Item $_.FullName $binPath }
+            $xmlFiles | ForEach-Object {
+              $dest = Join-Path $binPath $_.Name
+              if ($_.FullName -ne $dest) { Copy-Item $_.FullName $dest -Force }
+            }
           }
 
           Compress-Archive -Path "$buildRoot\*" -DestinationPath $zipPath -Force
@@ -68,7 +73,6 @@ jobs:
           name: packaged-mod
           path: ${{ github.workspace }}\${{ github.event.repository.name }}.zip
           compression-level: 0
-
 
       - name: Upload release asset (only on tags)
         if: startsWith(github.ref, 'refs/tags/v')
