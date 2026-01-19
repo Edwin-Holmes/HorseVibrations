@@ -67,6 +67,8 @@ jobs:
         with:
           name: packaged-mod
           path: ${{ github.workspace }}\${{ github.event.repository.name }}.zip
+          compression-level: 0
+
 
       - name: Upload release asset (only on tags)
         if: startsWith(github.ref, 'refs/tags/v')
