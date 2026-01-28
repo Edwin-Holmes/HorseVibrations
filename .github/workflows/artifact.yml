@@ -1,15 +1,13 @@
-name: Publish Release
+name: Create Artifact
 
 on:
   push:
-    tags:
-      - 'v*'   # run only when you push a version tag like v1.0.9
+    branches:
+      - '**'
 
 jobs:
-  release:
+  build:
     runs-on: windows-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout repo
@@ -24,7 +22,6 @@ jobs:
           $modName       = "mod$repoName"
 
           $buildRoot   = Join-Path $workspaceRoot "build"
-          $zipPath     = Join-Path $workspaceRoot "$repoName-$version.zip"
           $binPath     = Join-Path $buildRoot "bin\config\r4game\user_config_matrix\pc"
           $modPath     = Join-Path $buildRoot "mods\$modName"
           $contentPath = Join-Path $modPath "content"
@@ -65,9 +62,8 @@ jobs:
             }
           }
 
-          Compress-Archive -Path "$buildRoot\*" -DestinationPath $zipPath -Force
-
-      - name: Upload release asset
-        uses: softprops/action-gh-release@v1
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: '**/*.zip'
+          name: ${{ github.event.repository.name }}-${{ github.ref_name }}
+          path: build/
