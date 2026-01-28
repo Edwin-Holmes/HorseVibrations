@@ -25,7 +25,7 @@ A Witcher 3 script mod that adds immersive controller vibration feedback while r
 
 ## Technical Details
 
-### Gait Vibration Settings
+### Gait Vibration Settings (@18-22 in HorseVibeClass.ws)
 
 | Gait | Short Gap | Long Gap | First Intensity | Second Intensity |
 |------|-----------|----------|-----------------|------------------|
